@@ -1,0 +1,6 @@
+node_modules/
+.idea
+docker-api.iml
+
+# Ignore .env file as it holds secrets
+.env
