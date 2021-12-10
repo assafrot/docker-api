@@ -1,7 +1,7 @@
 import { createServer } from '../utils/server';
 import supertest from 'supertest';
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { CreateImage } from '../service/image.service';
+import { createImage } from '../service/image.service';
 import mongoose from 'mongoose';
 
 const app = createServer()
@@ -9,7 +9,10 @@ const app = createServer()
 const name = "my-image1"
 const repository = "my-repo"
 const version = "1.1.0"
-const metadata = {key: "value"}
+const metadata = {
+    key: "value",
+    key2: 1
+}
 
 const imageInput = {
     name: name,
@@ -17,6 +20,8 @@ const imageInput = {
     version: version,
     metadata: metadata,
 }
+let anotherImageInput = JSON.parse(JSON.stringify(imageInput))
+anotherImageInput.name = 'new-image-name'
 
 describe('image', () => {
     beforeAll(async () => {
@@ -47,7 +52,7 @@ describe('image', () => {
 
         describe("when the image does exists", () => {
             it('should return the image and status 200', async () => {
-                const image = await CreateImage(imageInput)
+                const image = await createImage(imageInput)
                 const {body, statusCode} = await supertest(app).get(`/images/${image._id}`)
 
                 expect(statusCode).toBe(200);
@@ -69,14 +74,11 @@ describe('image', () => {
 
         describe("when images exists", () => {
             it('should return list of images and status 200', async () => {
-                await CreateImage(imageInput)
-                let anotherImageInput = JSON.parse(JSON.stringify(imageInput))
-                anotherImageInput.name = 'new-image-name'
-                await CreateImage(anotherImageInput)
+                await createImage(imageInput)
+                await createImage(anotherImageInput)
                 const {body, statusCode} = await supertest(app).get(`/images`)
 
                 expect(statusCode).toBe(200);
-                console.log(body)
                 expect(body.images.length).toEqual(2);
             })
 
@@ -91,7 +93,6 @@ describe('image', () => {
                         name: "my-new-image",
                     }
                     const {statusCode, body} = await supertest(app).post('/images').send(invalidImageInput)
-                    console.log(body)
                     expect(statusCode).toBe(400);
                     // @ts-ignore
                     let errorsMessages = body.map(er => er.message)
@@ -107,7 +108,6 @@ describe('image', () => {
                         metadata: 2
                     }
                     const {statusCode, body} = await supertest(app).post('/images').send(invalidImageInput)
-                    console.log(body)
                     expect(statusCode).toBe(400);
                     // @ts-ignore
                     let errorsMessages = body.map(er => er.message)
@@ -132,16 +132,85 @@ describe('image', () => {
                     updatedAt: expect.any(String)
                 });
             });
-        });
-
-        describe('when the image already exists', () => {
-            it('should return 409', async () => {
-                await CreateImage(imageInput);
-                let {statusCode} = await supertest(app).post('/images').send(imageInput)
-                expect(statusCode).toBe(409);
+            describe('when the image already exists', () => {
+                it('should return 409', async () => {
+                    await createImage(imageInput);
+                    let {statusCode} = await supertest(app).post('/images').send(imageInput)
+                    expect(statusCode).toBe(409);
+                });
             });
         });
     });
+
+    describe('update image',()=>{
+        describe('when image not exists',()=>{
+            it('should return 404',async ()=>{
+                const imageId = new mongoose.Types.ObjectId().toString()
+                await supertest(app).get(`/images/${imageId}`).expect(404)
+            })
+        });
+        describe('when image exists', ()=>{
+            it('should return the updated the image and status 200 ',async ()=>{
+                const image = await createImage(imageInput);
+                let payloadToUpdate = JSON.parse(JSON.stringify(imageInput))
+                payloadToUpdate.version = "1.2.3"
+                let {statusCode,body} = await supertest(app).put(`/images/${image._id}`).send(payloadToUpdate)
+                expect(statusCode).toBe(200);
+                expect(body._id).toBe(image._id.toString());
+                expect(body.version).toBe(payloadToUpdate.version);
+            });
+            describe('when updating metadata', ()=>{
+                it('should merge data,',async ()=>{
+                    const image = await createImage(imageInput);
+                    let payloadToUpdate = JSON.parse(JSON.stringify(imageInput))
+                    payloadToUpdate.metadata = {
+                        key2: 23,
+                        key3: true
+                    }
+                    let {body} = await supertest(app).put(`/images/${image._id}`).send(payloadToUpdate)
+                    let expectedMetaData = {
+                        key: "value",
+                        key2: 23,
+                        key3: true
+                    }
+                    expect(body.metadata).toEqual(expectedMetaData);
+                })
+            })
+        })
+    })
+
+    describe('get image combinations',()=>{
+        describe('when there are no images',()=>{
+            it('should return 200 with empty array', async()=> {
+                let {statusCode,body} = await supertest(app).get(`/images/combinations/0`)
+
+                expect(statusCode).toBe(200);
+                expect(body).toEqual([]);
+            });
+        })
+        describe('when there are images',()=>{
+            describe('when length is greater than images count',()=>{
+                it('should return 200 with empty array', async()=> {
+                    await createImage(imageInput);
+                    let {statusCode,body} = await supertest(app).get(`/images/combinations/2`)
+                    expect(statusCode).toBe(200);
+                    expect(body).toEqual([]);
+                });
+            })
+            describe('when length is in valid range',()=>{
+                it('should return 200 with list of combinations', async()=> {
+                    let thirdImageInput = JSON.parse(JSON.stringify(imageInput))
+                    thirdImageInput.name = 'y-third-image'
+                    await createImage(imageInput);
+                    await createImage(anotherImageInput);
+                    await createImage(thirdImageInput);
+                    let {statusCode,body} = await supertest(app).get(`/images/combinations/2`)
+                    expect(statusCode).toBe(200);
+                    expect(body.length).toBe(3);
+                });
+            })
+        })
+    })
 })
 
 
