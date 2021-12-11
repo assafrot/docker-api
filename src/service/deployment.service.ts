@@ -16,15 +16,10 @@ export class DeploymentService {
             if (!image) {
                 throw new Error("Cant create deployment. Image is not exists")
             }
-            const session = await DeploymentModel.startSession();
-            await session.withTransaction(async () => {
-                let deploy =  await DeploymentModel.create(input);
+
+                let deploy = await DeploymentModel.create(input);
                 await this.writeCount();
                 return deploy
-            });
-            await session.endSession();
-            //
-
         } catch (e: any) {
             if (e['code'] === 11000) {
                 throw new Error("Deployment Already Exists")
