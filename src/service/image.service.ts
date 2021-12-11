@@ -46,9 +46,14 @@ export class ImageService {
         }
     }
 
-    async getImages() {
+    async getImages(limit = 2 , skip = 0) {
         try {
-            return await ImageModel.find();
+            return await ImageModel.find()
+                .sort({
+                    createdAt: 'desc'
+                })
+                .limit(limit)
+                .skip(skip);
         } catch (e: any) {
             throw new Error((e))
         }

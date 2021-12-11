@@ -6,7 +6,9 @@ const imageService = new ImageService
 
 export async function getImagesHandler(req: Request, res: Response) {
     try{
-        const images = await imageService.getImages();
+        let parsedLimit = req.query.limit ? +req.query.limit : undefined;
+        let parsedSkip = req.query.skip ? +req.query.skip : undefined;
+        const images = await imageService.getImages(parsedLimit, parsedSkip);
         res.status(200).send({images})
     }catch(e:any){
         return res.status(500).send(e.message);

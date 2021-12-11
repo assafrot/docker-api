@@ -13,13 +13,14 @@ export async function createDeploymentHandler(req: Request, res: Response) {
         } else {
             return res.status(500).send(e.message);
         }
-
     }
 }
 
 export async function getAllDeploymentsHandler(req: Request, res: Response) {
     try {
-        const deployments = await deploymentService.getDeployments();
+        let parsedLimit = req.query.limit ? +req.query.limit : undefined;
+        let parsedSkip = req.query.skip ? +req.query.skip : undefined;
+        const deployments = await deploymentService.getDeployments(parsedLimit, parsedSkip);
         res.status(200).send({deployments})
     } catch (e: any) {
         return res.status(500).send(e.message);
