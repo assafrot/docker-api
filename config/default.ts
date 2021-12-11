@@ -8,8 +8,7 @@ if (!process.env.DB_HOST) {
 export default {
     port: 1337,
     dbUri: process.env.DB_HOST as string,
-    publicKey: process.env.JWT_PUBLIC_KEY,
     privateKey: process.env.JWT_PRIVATE_KEY,
-    accessTokenTtl: "15m",
-    refreshTokenTtl: "1y",
+    publicKey: process.env.JWT_PUBLIC_KEY,
+    accessTokenTtl: "60m",
 };
