@@ -6,7 +6,6 @@ import { imageInput } from './image.input';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { DeploymentService } from '../service/deployment.service';
-import * as fs from 'fs';
 
 const app = createServer()
 const jwt = signJwt('fake-auth')
@@ -111,21 +110,4 @@ describe("deployment", () => {
             });
         })
     })
-
-    // describe('count', ()=> {
-    //     it('should return 200 and count', async ()=> {
-            // how to mock sf?
-            // const image = await imageService.createImage(imageInput);
-            // const DeploymentInput = {
-            //     imageId: image._id
-            // }
-            // let deployNumber = Math.floor(Math.random() * 3) + 1
-            // for (let i = 0; i < deployNumber; i++) {
-            //     await deploymentService.createDeployment(DeploymentInput)
-            // }
-            // const { statusCode, body } = await supertest(app).get('/deployment/count').set("Authorization", `Bearer ${jwt}`);
-            // expect(statusCode).toBe(200);
-            // expect(body.count).toBe(deployNumber);
-    //     });
-    // });
 });

@@ -1,1 +1,2 @@
-4
+machine1 10
+machine2 2
