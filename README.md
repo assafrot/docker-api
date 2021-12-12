@@ -1,7 +1,7 @@
 # docker-api
 
 ## Testing the appliction
-The tests located in `./src/tets`.
+The tests located in `./src/tests`.
 For running the test please run `npm run test`
 
 ## TBD:
